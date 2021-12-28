@@ -38,7 +38,7 @@ func read(b *Brainfuck) {
 	b.Cells[b.Pointer] = char
 }
 
-func loop(b *Brainfuck) {
+func startLoop(b *Brainfuck) {
 	if b.Cells[b.Pointer] == 0 {
 		b.Instruction = findMatching(1, b.Instructions, b.Instruction)
 	}

@@ -34,7 +34,7 @@ func New() *Brainfuck {
 	b.AddOperator('>', next)
 	b.AddOperator('.', print)
 	b.AddOperator(',', read)
-	b.AddOperator('[', loop)
+	b.AddOperator('[', startLoop)
 	b.AddOperator(']', endLoop)
 
 	return b
@@ -198,7 +198,7 @@ Start a loop.
 
 	// Output: A
 */
-func (b *Brainfuck) Loop() *Brainfuck {
+func (b *Brainfuck) StartLoop() *Brainfuck {
 	b.Instructions = append(b.Instructions, '[')
 
 	return b
