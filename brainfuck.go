@@ -1,13 +1,12 @@
 package brainfuck
 
+import (
+	"io"
+	"os"
+)
+
 /*
 A Brainfuck interpreter.
-
-	b := brainfuck.New()
-	b.SetInstructions("++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.")
-	b.Run()
-
-	// Output: Hello World!
 */
 type Brainfuck struct {
 	Cells        []byte                    // Slice of cells.
@@ -15,6 +14,8 @@ type Brainfuck struct {
 	Instruction  int                       // Index of the current instruction. (Not recommended to be changed manually.)
 	Pointer      int                       // Index of the current cell. (Not recommended to be changed manually.)
 	Operators    map[rune]func(*Brainfuck) // Map of operators.
+	Reader       io.Reader                 // Reader to read bytes from.
+	Writer       io.Writer                 // Writer to write bytes to.
 }
 
 /*
@@ -26,6 +27,8 @@ func New() *Brainfuck {
 	b := new(Brainfuck)
 
 	b.Cells = []byte{0}
+	b.Reader = os.Stdin
+	b.Writer = os.Stdout
 
 	b.Operators = make(map[rune]func(*Brainfuck))
 	b.AddOperator('+', increment)
@@ -42,15 +45,6 @@ func New() *Brainfuck {
 
 /*
 Add a new custom operator to the interpreter.
-
-	b := brainfuck.New()
-	b.AddOperator('~', func(b *Brainfuck) {
-		fmt.Println("Hello World!")
-	})
-	b.SetInstructions("~")
-	b.Run()
-
-	// Output: Hello World!
 */
 func (b *Brainfuck) AddOperator(operator rune, fn func(*Brainfuck)) *Brainfuck {
 	b.Operators[operator] = fn
@@ -60,12 +54,6 @@ func (b *Brainfuck) AddOperator(operator rune, fn func(*Brainfuck)) *Brainfuck {
 
 /*
 Set the instructions to run.
-
-	b := brainfuck.New()
-	b.SetInstructions("++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.")
-	b.Run()
-
-	// Output: Hello World!
 */
 func (b *Brainfuck) SetInstructions(instructions string) *Brainfuck {
 	b.Instructions = []rune{}
@@ -80,12 +68,6 @@ func (b *Brainfuck) SetInstructions(instructions string) *Brainfuck {
 
 /*
 Run the instructions.
-
-	b := brainfuck.New()
-	b.SetInstructions("++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++.")
-	b.Run()
-
-	// Output: Hello World!
 */
 func (b *Brainfuck) Run() {
 	for b.Instruction < len(b.Instructions) {
@@ -96,13 +78,6 @@ func (b *Brainfuck) Run() {
 
 /*
 Increment the value at the pointer.
-
-	b := brainfuck.New()
-	b.SetInstructions("+")
-	b.Run()
-	fmt.Println(b.Cells[b.Pointer])
-
-	// Output: 1
 */
 func (b *Brainfuck) Increment() *Brainfuck {
 	b.Instructions = append(b.Instructions, '+')
@@ -112,13 +87,6 @@ func (b *Brainfuck) Increment() *Brainfuck {
 
 /*
 Decrement the value at the pointer.
-
-	b := brainfuck.New()
-	b.SetInstructions("++-")
-	b.Run()
-	fmt.Println(b.Cells[b.Pointer])
-
-	// Output: 1
 */
 func (b *Brainfuck) Decrement() *Brainfuck {
 	b.Instructions = append(b.Instructions, '-')
@@ -128,13 +96,6 @@ func (b *Brainfuck) Decrement() *Brainfuck {
 
 /*
 Move the pointer to the next cell.
-
-	b := brainfuck.New()
-	b.SetInstructions(">")
-	b.Run()
-	fmt.Println(b.Pointer)
-
-	// Output: 1
 */
 func (b *Brainfuck) Next() *Brainfuck {
 	b.Instructions = append(b.Instructions, '>')
@@ -144,13 +105,6 @@ func (b *Brainfuck) Next() *Brainfuck {
 
 /*
 Move the pointer to the previous cell.
-
-	b := brainfuck.New()
-	b.SetInstructions(">><")
-	b.Run()
-	fmt.Println(b.Pointer)
-
-	// Output: 1
 */
 func (b *Brainfuck) Previous() *Brainfuck {
 	b.Instructions = append(b.Instructions, '<')
@@ -160,12 +114,6 @@ func (b *Brainfuck) Previous() *Brainfuck {
 
 /*
 Print the value at the pointer.
-
-	b := brainfuck.New()
-	b.SetInstructions("+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++.")
-	b.Run()
-
-	// Output: A
 */
 func (b *Brainfuck) Print() *Brainfuck {
 	b.Instructions = append(b.Instructions, '.')
@@ -175,13 +123,6 @@ func (b *Brainfuck) Print() *Brainfuck {
 
 /*
 Read a character from stdin and store it at the pointer.
-
-	b := brainfuck.New()
-	b.SetInstructions(",.")
-	b.Run()
-
-	// Input: A
-	// Output: A
 */
 func (b *Brainfuck) Read() *Brainfuck {
 	b.Instructions = append(b.Instructions, ',')
@@ -191,12 +132,6 @@ func (b *Brainfuck) Read() *Brainfuck {
 
 /*
 Start a loop.
-
-	b := brainfuck.New()
-	b.SetInstructions("+++++[>+++++++++++++<-]>.")
-	b.Run()
-
-	// Output: A
 */
 func (b *Brainfuck) StartLoop() *Brainfuck {
 	b.Instructions = append(b.Instructions, '[')
@@ -206,12 +141,6 @@ func (b *Brainfuck) StartLoop() *Brainfuck {
 
 /*
 End a loop.
-
-	b := brainfuck.New()
-	b.SetInstructions("+++++[>+++++++++++++<-]>.")
-	b.Run()
-
-	// Output: A
 */
 func (b *Brainfuck) EndLoop() *Brainfuck {
 	b.Instructions = append(b.Instructions, ']')

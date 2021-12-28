@@ -3,7 +3,6 @@ package brainfuck
 import (
 	"bufio"
 	"fmt"
-	"os"
 )
 
 func next(b *Brainfuck) {
@@ -28,14 +27,11 @@ func decrement(b *Brainfuck) {
 }
 
 func print(b *Brainfuck) {
-	fmt.Print(string(b.Cells[b.Pointer]))
-
+	fmt.Fprint(b.Writer, string(b.Cells[b.Pointer]))
 }
 
 func read(b *Brainfuck) {
-	reader := bufio.NewReader(os.Stdin)
-	char, _ := reader.ReadByte()
-	b.Cells[b.Pointer] = char
+	b.Cells[b.Pointer], _ = bufio.NewReader(b.Reader).ReadByte()
 }
 
 func startLoop(b *Brainfuck) {
