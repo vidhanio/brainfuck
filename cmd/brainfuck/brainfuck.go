@@ -1,12 +1,11 @@
 package main
 
-import "github.com/vidhanio/brainfuck-go"
+import "github.com/vidhanio/brainfuck"
 
 func main() {
-	bf := brainfuck.New(`++++++++[>+>++++<<-]>++>>+<[-[>>+<<-]+>>]>+[
+	brainfuck.New().AddInstructions(`++++++++[>+>++++<<-]>++>>+<[-[>>+<<-]+>>]>+[
 		-<<<[
 			->[+[-]+>++>>>-<<]<[<]>>++++++[<<+++++>>-]+<<++.[-]<<
 		]>.>+[>>]>+
-	]`)
-	bf.Run()
+	]`).Run()
 }

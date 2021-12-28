@@ -1,148 +1,104 @@
 package brainfuck
 
-import (
-	"bufio"
-	"fmt"
-	"os"
-)
-
 type Brainfuck struct {
-	Instructions []rune  // The instructions to execute
-	Instruction  int     // The current instruction
-	Cells        []uint8 // Cells
-	Current      int     // The current cell
+	Cells        []byte
+	instructions []rune
+	instruction  int
+	current      int
+	operators    map[rune]func(*Brainfuck)
 }
 
-func New(instructions string) *Brainfuck {
-	var instructs []rune
+func New() *Brainfuck {
+	b := new(Brainfuck)
 
+	b.Cells = []byte{0}
+
+	b.operators = make(map[rune]func(*Brainfuck))
+	b.AddOperator('+', increment)
+	b.AddOperator('-', decrement)
+	b.AddOperator('<', previous)
+	b.AddOperator('>', next)
+	b.AddOperator('.', print)
+	b.AddOperator(',', read)
+	b.AddOperator('[', loop)
+	b.AddOperator(']', endLoop)
+
+	return b
+}
+
+func (b *Brainfuck) AddOperator(operator rune, fn func(*Brainfuck)) *Brainfuck {
+	b.operators[operator] = fn
+
+	return b
+}
+
+func (b *Brainfuck) AddInstructions(instructions string) *Brainfuck {
 	for _, instruction := range instructions {
-		if instruction == '+' || instruction == '-' || instruction == '<' || instruction == '>' || instruction == '.' || instruction == ',' || instruction == '[' || instruction == ']' {
-			instructs = append(instructs, instruction)
+		if _, ok := b.operators[instruction]; ok {
+			b.instructions = append(b.instructions, instruction)
 		}
 	}
 
-	return &Brainfuck{
-		Instructions: instructs,
-		Instruction:  0,
-		Cells:        []uint8{0},
-		Current:      0,
-	}
+	return b
+}
+
+func (b *Brainfuck) SetInstructions(instructions string) *Brainfuck {
+	b.instructions = []rune{}
+
+	return b.AddInstructions(instructions)
 }
 
 func (b *Brainfuck) Run() {
-	for b.Instruction < len(b.Instructions) {
-		switch b.Instructions[b.Instruction] {
-		case '+':
-			b.Increment()
-		case '-':
-			b.Decrement()
-		case '<':
-			b.Previous()
-		case '>':
-			b.Next()
-		case '.':
-			b.Print()
-		case ',':
-			b.Read()
-		case '[':
-			b.Loop()
-		case ']':
-			b.EndLoop()
-		}
-
-		b.Instruction++
+	for b.instruction < len(b.instructions) {
+		b.operators[b.instructions[b.instruction]](b)
+		b.instruction++
 	}
-}
-
-func (b *Brainfuck) Next() *Brainfuck {
-	b.Current++
-	if b.Current >= len(b.Cells) {
-		b.Cells = append(b.Cells, 0)
-	}
-
-	return b
-}
-
-func (b *Brainfuck) Previous() *Brainfuck {
-	if b.Current > 0 {
-		b.Current--
-	}
-
-	return b
 }
 
 func (b *Brainfuck) Increment() *Brainfuck {
-	b.Cells[b.Current]++
+	b.instructions = append(b.instructions, '+')
 
 	return b
 }
 
 func (b *Brainfuck) Decrement() *Brainfuck {
-	b.Cells[b.Current]--
+	b.instructions = append(b.instructions, '-')
+
+	return b
+}
+
+func (b *Brainfuck) Next() *Brainfuck {
+	b.instructions = append(b.instructions, '>')
+
+	return b
+}
+
+func (b *Brainfuck) Previous() *Brainfuck {
+	b.instructions = append(b.instructions, '<')
 
 	return b
 }
 
 func (b *Brainfuck) Print() *Brainfuck {
-	fmt.Print(string(b.Cells[b.Current]))
+	b.instructions = append(b.instructions, '.')
 
 	return b
 }
 
 func (b *Brainfuck) Read() *Brainfuck {
-	reader := bufio.NewReader(os.Stdin)
-	char, _, _ := reader.ReadRune()
-	b.Cells[b.Current] = uint8(char)
+	b.instructions = append(b.instructions, ',')
 
 	return b
 }
 
 func (b *Brainfuck) Loop() *Brainfuck {
-	if b.Cells[b.Current] == 0 {
-		b.Instruction = findMatching(1, b.Instructions, b.Instruction)
-		return b
-	}
+	b.instructions = append(b.instructions, '[')
 
 	return b
 }
 
 func (b *Brainfuck) EndLoop() *Brainfuck {
-	if b.Cells[b.Current] != 0 {
-		b.Instruction = findMatching(-1, b.Instructions, b.Instruction)
-		return b
-	}
+	b.instructions = append(b.instructions, ']')
 
 	return b
-}
-
-func findMatching(direction int, instructions []rune, instruction int) int {
-	counter := 0
-	if direction == 1 {
-		for i := instruction; i < len(instructions); i++ {
-			if instructions[i] == ']' {
-				counter++
-			} else if instructions[i] == '[' {
-				counter--
-			}
-
-			if counter == 0 {
-				return i
-			}
-		}
-	} else {
-		for i := instruction; i >= 0; i-- {
-			if instructions[i] == ']' {
-				counter++
-			} else if instructions[i] == '[' {
-				counter--
-			}
-
-			if counter == 0 {
-				return i
-			}
-		}
-	}
-
-	return -1
 }
