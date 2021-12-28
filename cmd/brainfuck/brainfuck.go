@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"flag"
+	"os"
 
 	"github.com/vidhanio/brainfuck"
 )
@@ -17,7 +18,12 @@ func main() {
 	var code string
 
 	if *file != "" {
-		code = *file
+		content, err := os.ReadFile(*file)
+		if err != nil {
+			panic(err)
+		}
+
+		code = string(content)
 	} else if *input != "" {
 		code = *input
 	} else {
